@@ -7,10 +7,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.codewithmosh.store.dtos.RegisterUserDto;
 import com.codewithmosh.store.dtos.UserDto;
 import com.codewithmosh.store.mappers.UserMapper;
 import com.codewithmosh.store.repositories.UserRepository;
@@ -28,6 +33,8 @@ public class UserController {
     @GetMapping
     public Iterable<UserDto> getAllUsers(@RequestParam(required = false, defaultValue = "", name ="sort") String sort) //used to extract query parameters from the URL of an HTTP request.
     {
+        
+
        if(!Set.of("name" , "email").contains(sort))
        sort = "name";
 
@@ -48,5 +55,22 @@ public class UserController {
        }
 
        return ResponseEntity.ok(userMapper.toDto(user));
+    }
+
+    @PostMapping
+    public ResponseEntity<UserDto> createUser(UriComponentsBuilder uriBuilder,
+        @RequestBody RegisterUserDto request){
+        var user = userMapper.toEntity(request);
+        userRepository.save(user);
+
+        var userDto = userMapper.toDto(user);
+        var uri = uriBuilder.path("/users/{id}").buildAndExpand(userDto.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(userDto);
+    }
+
+    @PutMapping("/{id}")
+    public UserDto updateUser(@PathVariable(name = "id") Long id){
+
     }
 }
